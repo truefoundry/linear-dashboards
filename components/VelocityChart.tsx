@@ -25,6 +25,7 @@ interface Props {
   data: DataPoint[];
   org: string;
   teamKey: string;
+  completedStateIds: string[];
 }
 
 function openLinear(url: string) {
@@ -33,20 +34,20 @@ function openLinear(url: string) {
 
 function ClickableDot(props: {
   cx?: number; cy?: number; payload?: DataPoint;
-  org: string; teamKey: string;
+  org: string; teamKey: string; completedStateIds: string[];
 }) {
-  const { cx = 0, cy = 0, payload, org, teamKey } = props;
+  const { cx = 0, cy = 0, payload, org, teamKey, completedStateIds } = props;
   if (!payload) return null;
   return (
     <circle
       cx={cx} cy={cy} r={5} fill="#34D399" strokeWidth={0}
       style={{ cursor: "pointer" }}
-      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO))}
+      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
     />
   );
 }
 
-export default function VelocityChart({ data, org, teamKey }: Props) {
+export default function VelocityChart({ data, org, teamKey, completedStateIds }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -70,7 +71,7 @@ export default function VelocityChart({ data, org, teamKey }: Props) {
           cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Line
@@ -80,7 +81,7 @@ export default function VelocityChart({ data, org, teamKey }: Props) {
           name="Story Points"
           stroke="#34D399"
           strokeWidth={2}
-          dot={(props: object) => <ClickableDot {...(props as Parameters<typeof ClickableDot>[0])} org={org} teamKey={teamKey} />}
+          dot={(props: object) => <ClickableDot {...(props as Parameters<typeof ClickableDot>[0])} org={org} teamKey={teamKey} completedStateIds={completedStateIds} />}
           activeDot={{ r: 7 }}
         />
       </ComposedChart>

@@ -34,6 +34,7 @@ interface Props {
   weekLabels: string[];
   org: string;
   teamKey: string;
+  completedStateIds: string[];
   periodStart: string;
   periodEnd: string;
 }
@@ -49,7 +50,7 @@ function openLinear(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-function makeClickableDot(dev: DevData, weekISOMap: Map<string, { start: string; end: string }>, org: string, teamKey: string, color: string) {
+function makeClickableDot(dev: DevData, weekISOMap: Map<string, { start: string; end: string }>, org: string, teamKey: string, completedStateIds: string[], color: string) {
   return function ClickableDot(props: { cx?: number; cy?: number; payload?: { week: string } }) {
     const { cx = 0, cy = 0, payload } = props;
     if (!payload) return null;
@@ -58,13 +59,13 @@ function makeClickableDot(dev: DevData, weekISOMap: Map<string, { start: string;
     return (
       <circle cx={cx} cy={cy} r={4} fill={color} strokeWidth={0}
         style={{ cursor: "pointer" }}
-        onClick={() => openLinear(devWeekUrl(org, teamKey, dev.id, wk.start, wk.end))}
+        onClick={() => openLinear(devWeekUrl(org, teamKey, dev.id, wk.start, wk.end, completedStateIds))}
       />
     );
   };
 }
 
-export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey, periodStart, periodEnd }: Props) {
+export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey, completedStateIds, periodStart, periodEnd }: Props) {
   const [metric, setMetric] = useState<Metric>("points");
 
   const weekISOMap = new Map<string, { start: string; end: string }>();
@@ -113,7 +114,7 @@ export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey
           <Legend wrapperStyle={{ color: "#94A3B8", fontSize: 12 }} />
           {devVelocity.map((dev, i) => {
             const color = COLORS[i % COLORS.length];
-            const DotComponent = makeClickableDot(dev, weekISOMap, org, teamKey, color);
+            const DotComponent = makeClickableDot(dev, weekISOMap, org, teamKey, completedStateIds, color);
             return (
               <Line
                 key={dev.id}
@@ -143,7 +144,7 @@ export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey
               <tr
                 key={dev.id}
                 className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors cursor-pointer"
-                onClick={() => openLinear(devIssuesUrl(org, teamKey, dev.id, periodStart, periodEnd))}
+                onClick={() => openLinear(devIssuesUrl(org, teamKey, dev.id, periodStart, periodEnd, completedStateIds))}
                 title="Open all issues in Linear ↗"
               >
                 <td className="py-2.5 px-4 flex items-center gap-2.5 text-slate-200">

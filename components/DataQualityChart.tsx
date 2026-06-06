@@ -28,6 +28,7 @@ interface Props {
   data: DataPoint[];
   org: string;
   teamKey: string;
+  completedStateIds: string[];
 }
 
 function toStackedData(data: DataPoint[]) {
@@ -88,7 +89,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
-export default function DataQualityChart({ data, org, teamKey }: Props) {
+export default function DataQualityChart({ data, org, teamKey, completedStateIds }: Props) {
   const stacked = toStackedData(data);
 
   return (
@@ -102,25 +103,26 @@ export default function DataQualityChart({ data, org, teamKey }: Props) {
         <Bar dataKey="Complete" stackId="q" fill="#10B981" radius={[0, 0, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as StackedRow;
-            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Bar dataKey="No Due Date Only" stackId="q" fill="#0284C7" radius={[0, 0, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as StackedRow;
-            openLinear(missingDueDateUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(missingDueDateUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Bar dataKey="No Estimate Only" stackId="q" fill="#7C3AED" radius={[0, 0, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as StackedRow;
-            openLinear(missingEstimateUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(missingEstimateUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Bar dataKey="Missing Both" stackId="q" fill="#E11D48" radius={[4, 4, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as StackedRow;
             openLinear(teamIssuesUrl(org, teamKey, {
+              state: { id: { in: completedStateIds } },
               completedAt: { gte: d.weekStartISO, lte: d.weekEndISO },
               estimate: { null: true },
               dueDate: { null: true },

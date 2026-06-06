@@ -30,6 +30,26 @@ export async function getTeams(token: string) {
   return data.teams.nodes as { id: string; name: string; key: string }[];
 }
 
+export interface WorkflowState {
+  id: string;
+  name: string;
+  type: string; // "triage" | "backlog" | "unstarted" | "started" | "completed" | "cancelled"
+  color: string;
+}
+
+export async function getTeamStates(token: string, teamId: string): Promise<WorkflowState[]> {
+  const data = await gql(
+    token,
+    `query($teamId: String!) {
+      team(id: $teamId) {
+        states { nodes { id name type color } }
+      }
+    }`,
+    { teamId }
+  );
+  return data.team.states.nodes as WorkflowState[];
+}
+
 export async function getTeamMembers(token: string, teamId: string) {
   const data = await gql(
     token,

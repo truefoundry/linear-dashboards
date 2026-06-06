@@ -27,6 +27,7 @@ interface Props {
   data: DataPoint[];
   org: string;
   teamKey: string;
+  completedStateIds: string[];
 }
 
 function openLinear(url: string) {
@@ -51,19 +52,19 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 function RateDot(props: {
   cx?: number; cy?: number; payload?: DataPoint;
-  org: string; teamKey: string;
+  org: string; teamKey: string; completedStateIds: string[];
 }) {
-  const { cx = 0, cy = 0, payload, org, teamKey } = props;
+  const { cx = 0, cy = 0, payload, org, teamKey, completedStateIds } = props;
   if (!payload || payload.onTimeRate == null) return null;
   return (
     <circle cx={cx} cy={cy} r={4} fill="#FBBF24" strokeWidth={0}
       style={{ cursor: "pointer" }}
-      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO))}
+      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
     />
   );
 }
 
-export default function EfficiencyChart({ data, org, teamKey }: Props) {
+export default function EfficiencyChart({ data, org, teamKey, completedStateIds }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -76,13 +77,13 @@ export default function EfficiencyChart({ data, org, teamKey }: Props) {
         <Bar yAxisId="left" dataKey="onTime" name="On Time" stackId="a" fill="#059669" radius={[0, 0, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyOnTimeUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(weeklyOnTimeUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Bar yAxisId="left" dataKey="late" name="Late" stackId="a" fill="#E11D48" radius={[4, 4, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyLateUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+            openLinear(weeklyLateUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Line
@@ -92,7 +93,7 @@ export default function EfficiencyChart({ data, org, teamKey }: Props) {
           name="On-Time Rate %"
           stroke="#FBBF24"
           strokeWidth={2}
-          dot={(props: object) => <RateDot {...(props as Parameters<typeof RateDot>[0])} org={org} teamKey={teamKey} />}
+          dot={(props: object) => <RateDot {...(props as Parameters<typeof RateDot>[0])} org={org} teamKey={teamKey} completedStateIds={completedStateIds} />}
           activeDot={{ r: 6 }}
           connectNulls={false}
         />

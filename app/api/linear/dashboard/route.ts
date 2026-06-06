@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getCompletedIssues, getTeams, getViewer, LinearIssue } from "@/lib/linear";
+import { getCompletedIssues, getTeams, getTeamStates, getViewer, LinearIssue } from "@/lib/linear";
 import {
   startOfWeek,
   endOfWeek,
@@ -35,11 +35,19 @@ export async function GET(req: NextRequest) {
   const afterISO = after.toISOString();
   const beforeISO = before.toISOString();
 
-  const [issues, viewer, teams] = await Promise.all([
+  const [issues, viewer, teams, states] = await Promise.all([
     getCompletedIssues(session.accessToken, teamId, afterISO, beforeISO),
     getViewer(session.accessToken),
     getTeams(session.accessToken),
+    getTeamStates(session.accessToken, teamId),
   ]);
+
+  const completedStateIds = states
+    .filter((s) => s.type === "completed")
+    .map((s) => s.id);
+  const cancelledStateIds = states
+    .filter((s) => s.type === "cancelled")
+    .map((s) => s.id);
 
   const orgUrlKey = viewer.organization.urlKey;
   const teamKey = teams.find((t) => t.id === teamId)?.key ?? teamId;
@@ -192,6 +200,8 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     orgUrlKey,
     teamKey,
+    completedStateIds,
+    cancelledStateIds,
     period: { from: afterISO, to: beforeISO, weeks },
     totalIssues: issues.length,
     totalPoints: issues.reduce((s, i) => s + (i.estimate ?? 0), 0),
