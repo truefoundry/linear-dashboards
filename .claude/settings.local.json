@@ -5,7 +5,16 @@
       "Bash(npm install *)",
       "Bash(npx tsc *)",
       "Bash(xargs cat)",
-      "WebFetch(domain:developers.linear.app)"
+      "WebFetch(domain:developers.linear.app)",
+      "WebFetch(domain:linear.app)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm show *)",
+      "Bash(npm pack *)",
+      "Bash(npx --yes jsr @linear/sdk)",
+      "Bash(grep -r \"linear\\\\.app\\\\|webUrl\\\\|url\" /tmp/linear-sdk-check/node_modules/@linear/sdk/dist/index.js 2>/dev/null | grep -i \"linear\\\\.app\\\\|webUrl\" | head -20)",
+      "Bash(ls /tmp/linear-sdk-check/node_modules/@linear/sdk/dist/ 2>/dev/null; ls /tmp/linear-sdk-check/node_modules/@linear/sdk/ 2>/dev/null)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

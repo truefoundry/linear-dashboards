@@ -50,7 +50,10 @@ export async function GET(req: NextRequest) {
     .map((s) => s.id);
 
   const orgUrlKey = viewer.organization.urlKey;
-  const teamKey = teams.find((t) => t.id === teamId)?.key ?? teamId;
+  const team = teams.find((t) => t.id === teamId);
+  const teamKey = team?.key ?? teamId;
+  // team.url is e.g. "https://linear.app/truefoundry/team/MCP" — use as base for deep links
+  const teamUrl = team?.url ?? `https://linear.app/${orgUrlKey}/team/${teamKey}`;
 
   const weekIntervals = eachWeekOfInterval(
     { start: after, end: before },
@@ -201,6 +204,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     orgUrlKey,
     teamKey,
+    teamUrl,
     completedStateIds,
     cancelledStateIds,
     period: { from: format(after, "yyyy-MM-dd"), to: format(before, "yyyy-MM-dd"), weeks },

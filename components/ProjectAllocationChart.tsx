@@ -1,17 +1,10 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, Cell,
 } from "recharts";
-import { projectUrl, teamIssuesUrl } from "@/lib/linearUrls";
+import { projectUrl, teamCompletedUrl } from "@/lib/linearUrls";
 
 interface ProjectPoint {
   id: string | null;
@@ -22,8 +15,7 @@ interface ProjectPoint {
 
 interface Props {
   data: ProjectPoint[];
-  org: string;
-  teamKey: string;
+  org: string;          // still needed for projectUrl (uses org slug)
 }
 
 const PROJECT_COLORS = [
@@ -50,14 +42,14 @@ function openLinear(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-export default function ProjectAllocationChart({ data, org, teamKey }: Props) {
+export default function ProjectAllocationChart({ data, org }: Props) {
   const top = data.slice(0, 10);
 
   const handleClick = (data: unknown) => {
     const entry = data as ProjectPoint;
-    const url = entry.id
-      ? projectUrl(org, entry.id)
-      : teamIssuesUrl(org, teamKey, { project: { null: true } });
+    // If the issue has a project, go to that project's issues page.
+    // For "No Project" issues there's no good filter URL; fall through to the project url which will 404 gracefully.
+    const url = entry.id ? projectUrl(org, entry.id) : `https://linear.app/${org}`;
     openLinear(url);
   };
 

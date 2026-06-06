@@ -1,106 +1,108 @@
-const BASE = "https://linear.app";
+/**
+ * URL builder for Linear web app deep links.
+ *
+ * teamUrl comes from team.url in the GraphQL API (e.g. "https://linear.app/org/team/KEY").
+ * We derive view URLs from it so the base path is always correct.
+ *
+ * Linear's documented views:
+ *   {teamUrl}/active      - in progress
+ *   {teamUrl}/backlog     - backlog
+ *   {teamUrl}/completed   - completed (all time)
+ *   {teamUrl}/all         - all issues
+ *
+ * For date/assignee/quality filtering we use Linear's undocumented but stable
+ * ?filter= param with base64-encoded JSON matching the IssueFilter GraphQL type.
+ * (URL-encoded JSON was tried and does not work; base64 is the correct encoding.)
+ */
 
-function encode(filter: object) {
-  return encodeURIComponent(JSON.stringify(filter));
+function encodeFilter(filter: object): string {
+  // Linear's web app reads the filter param as base64-encoded JSON
+  return btoa(JSON.stringify(filter));
 }
 
-/** All issues for a team, optionally filtered. */
-export function teamIssuesUrl(org: string, teamKey: string, filter?: object) {
-  const base = `${BASE}/${org}/team/${teamKey}/all`;
-  if (!filter) return base;
-  const url = `${base}?filter=${encode(filter)}`;
-  // Log the decoded filter so it can be inspected in browser DevTools
+function withFilter(base: string, filter: object): string {
+  const url = `${base}?filter=${encodeFilter(filter)}`;
   if (typeof window !== "undefined") {
     console.debug("[Linear URL]", url, "\n[filter]", JSON.stringify(filter, null, 2));
   }
   return url;
 }
 
-/**
- * Completed issues in a calendar week.
- * weekStart / weekEnd are YYYY-MM-DD strings (e.g. "2025-05-12" / "2025-05-18").
- */
+/** Team completed issues view — the built-in /completed view (no date filter). */
+export function teamCompletedUrl(teamUrl: string): string {
+  return `${teamUrl}/completed`;
+}
+
+/** Completed issues in a calendar week (YYYY-MM-DD). */
 export function weeklyCompletedUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     completedAt: { gte: weekStart, lte: weekEnd },
   });
 }
 
-/**
- * Completed issues that were late (closed after their due date) in a week.
- * "Late" = dueDate < completedAt, approximated as dueDate < weekStart
- * (i.e. the due date had already passed before the week the issue was closed).
- */
+/** Completed issues that were late in a week. */
 export function weeklyLateUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     completedAt: { gte: weekStart, lte: weekEnd },
     dueDate: { lt: weekStart },
   });
 }
 
-/**
- * Completed issues that were on-time (closed on or before their due date) in a week.
- * "On time" = dueDate >= completedAt, approximated as dueDate >= weekStart.
- */
+/** Completed issues that were on-time in a week. */
 export function weeklyOnTimeUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     completedAt: { gte: weekStart, lte: weekEnd },
     dueDate: { gte: weekStart },
   });
 }
 
-/** Direct link to a project's issues. */
-export function projectUrl(org: string, projectId: string) {
-  return `${BASE}/${org}/project/${projectId}/issues`;
+/** Direct link to a project's issues (uses projectId from the API). */
+export function projectUrl(org: string, projectId: string): string {
+  return `https://linear.app/${org}/project/${projectId}/issues`;
 }
 
-/** All completed issues for a developer across a period (YYYY-MM-DD bounds). */
+/** All completed issues for a developer across a period. */
 export function devIssuesUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   assigneeEmail: string,
   periodStart: string,
   periodEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     assignee: { email: { eq: assigneeEmail } },
     completedAt: { gte: periodStart, lte: periodEnd },
   });
 }
 
-/** Completed issues for a developer in a specific week (YYYY-MM-DD bounds). */
+/** Completed issues for a developer in a specific week. */
 export function devWeekUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   assigneeEmail: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     assignee: { email: { eq: assigneeEmail } },
     completedAt: { gte: weekStart, lte: weekEnd },
@@ -109,13 +111,12 @@ export function devWeekUrl(
 
 /** Completed issues missing a story point estimate in a week. */
 export function missingEstimateUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     completedAt: { gte: weekStart, lte: weekEnd },
     estimate: { null: true },
@@ -124,15 +125,41 @@ export function missingEstimateUrl(
 
 /** Completed issues missing a due date in a week. */
 export function missingDueDateUrl(
-  org: string,
-  teamKey: string,
+  teamUrl: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
-) {
-  return teamIssuesUrl(org, teamKey, {
+): string {
+  return withFilter(`${teamUrl}/all`, {
     state: { id: { in: completedStateIds } },
     completedAt: { gte: weekStart, lte: weekEnd },
     dueDate: { null: true },
+  });
+}
+
+/** Completed issues missing both estimate and due date in a week. */
+export function missingBothUrl(
+  teamUrl: string,
+  weekStart: string,
+  weekEnd: string,
+  completedStateIds: string[]
+): string {
+  return withFilter(`${teamUrl}/all`, {
+    state: { id: { in: completedStateIds } },
+    completedAt: { gte: weekStart, lte: weekEnd },
+    estimate: { null: true },
+    dueDate: { null: true },
+  });
+}
+
+/** Completed issues for a project across the period. */
+export function projectCompletedUrl(
+  teamUrl: string,
+  projectId: string,
+  completedStateIds: string[]
+): string {
+  return withFilter(`${teamUrl}/all`, {
+    state: { id: { in: completedStateIds } },
+    project: { id: { eq: projectId } },
   });
 }

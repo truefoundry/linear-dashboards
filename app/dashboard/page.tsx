@@ -19,6 +19,7 @@ interface Team {
 interface DashboardData {
   orgUrlKey: string;
   teamKey: string;
+  teamUrl: string;
   completedStateIds: string[];
   cancelledStateIds: string[];
   period: { from: string; to: string; weeks: number };
@@ -208,7 +209,7 @@ export default function DashboardPage() {
             <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
               <h2 className="text-sm font-semibold text-slate-200 mb-1">Team Velocity Trend</h2>
               <p className="text-xs text-slate-500 mb-4">Issues completed and story points delivered per week · click a bar to open in Linear</p>
-              <VelocityChart data={dashboard.velocityTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} completedStateIds={dashboard.completedStateIds} />
+              <VelocityChart data={dashboard.velocityTrend} teamUrl={dashboard.teamUrl} completedStateIds={dashboard.completedStateIds} />
             </section>
 
             {/* Two-column row */}
@@ -216,14 +217,14 @@ export default function DashboardPage() {
               <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
                 <h2 className="text-sm font-semibold text-slate-200 mb-1">Project Allocation</h2>
                 <p className="text-xs text-slate-500 mb-4">Issues and points per project · click a bar to open in Linear</p>
-                <ProjectAllocationChart data={dashboard.projectAllocation} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} />
+                <ProjectAllocationChart data={dashboard.projectAllocation} org={dashboard.orgUrlKey} />
               </section>
               <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
                 <h2 className="text-sm font-semibold text-slate-200 mb-1">On-Time Completion</h2>
                 <p className="text-xs text-slate-500 mb-4">
                   Issues closed on or before due date · excludes issues with no due date
                 </p>
-                <EfficiencyChart data={dashboard.efficiencyTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} completedStateIds={dashboard.completedStateIds} />
+                <EfficiencyChart data={dashboard.efficiencyTrend} teamUrl={dashboard.teamUrl} completedStateIds={dashboard.completedStateIds} />
               </section>
             </div>
 
@@ -233,7 +234,7 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-500 mb-4">
                 % of completed issues missing story points or due date — lower is better
               </p>
-              <DataQualityChart data={dashboard.dataQualityTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} completedStateIds={dashboard.completedStateIds} />
+              <DataQualityChart data={dashboard.dataQualityTrend} teamUrl={dashboard.teamUrl} completedStateIds={dashboard.completedStateIds} />
             </section>
 
             {/* Per-developer velocity */}
@@ -243,8 +244,7 @@ export default function DashboardPage() {
               <DevVelocityChart
                 devVelocity={dashboard.devVelocity}
                 weekLabels={dashboard.weekLabels}
-                org={dashboard.orgUrlKey}
-                teamKey={dashboard.teamKey}
+                teamUrl={dashboard.teamUrl}
                 completedStateIds={dashboard.completedStateIds}
                 periodStart={dashboard.period.from}
                 periodEnd={dashboard.period.to}

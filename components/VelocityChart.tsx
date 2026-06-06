@@ -1,15 +1,8 @@
 "use client";
 
 import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { weeklyCompletedUrl } from "@/lib/linearUrls";
 
@@ -23,8 +16,7 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  org: string;
-  teamKey: string;
+  teamUrl: string;
   completedStateIds: string[];
 }
 
@@ -34,20 +26,18 @@ function openLinear(url: string) {
 
 function ClickableDot(props: {
   cx?: number; cy?: number; payload?: DataPoint;
-  org: string; teamKey: string; completedStateIds: string[];
+  teamUrl: string; completedStateIds: string[];
 }) {
-  const { cx = 0, cy = 0, payload, org, teamKey, completedStateIds } = props;
+  const { cx = 0, cy = 0, payload, teamUrl, completedStateIds } = props;
   if (!payload) return null;
   return (
-    <circle
-      cx={cx} cy={cy} r={5} fill="#34D399" strokeWidth={0}
-      style={{ cursor: "pointer" }}
-      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
+    <circle cx={cx} cy={cy} r={5} fill="#34D399" strokeWidth={0} style={{ cursor: "pointer" }}
+      onClick={() => openLinear(weeklyCompletedUrl(teamUrl, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
     />
   );
 }
 
-export default function VelocityChart({ data, org, teamKey, completedStateIds }: Props) {
+export default function VelocityChart({ data, teamUrl, completedStateIds }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -62,26 +52,16 @@ export default function VelocityChart({ data, org, teamKey, completedStateIds }:
           cursor={{ fill: "rgba(148,163,184,0.08)" }}
         />
         <Legend wrapperStyle={{ color: "#94A3B8", fontSize: 12 }} />
-        <Bar
-          yAxisId="left"
-          dataKey="count"
-          name="Issues"
-          fill="#7C3AED"
-          radius={[4, 4, 0, 0]}
-          cursor="pointer"
+        <Bar yAxisId="left" dataKey="count" name="Issues" fill="#7C3AED" radius={[4, 4, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
+            openLinear(weeklyCompletedUrl(teamUrl, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Line
-          yAxisId="right"
-          type="monotone"
-          dataKey="points"
-          name="Story Points"
-          stroke="#34D399"
-          strokeWidth={2}
-          dot={(props: object) => <ClickableDot {...(props as Parameters<typeof ClickableDot>[0])} org={org} teamKey={teamKey} completedStateIds={completedStateIds} />}
+          yAxisId="right" type="monotone" dataKey="points" name="Story Points"
+          stroke="#34D399" strokeWidth={2}
+          dot={(props: object) => <ClickableDot {...(props as Parameters<typeof ClickableDot>[0])} teamUrl={teamUrl} completedStateIds={completedStateIds} />}
           activeDot={{ r: 7 }}
         />
       </ComposedChart>

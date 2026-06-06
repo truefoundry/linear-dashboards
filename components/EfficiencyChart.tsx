@@ -1,15 +1,8 @@
 "use client";
 
 import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { weeklyCompletedUrl, weeklyLateUrl, weeklyOnTimeUrl } from "@/lib/linearUrls";
 
@@ -25,8 +18,7 @@ interface DataPoint {
 
 interface Props {
   data: DataPoint[];
-  org: string;
-  teamKey: string;
+  teamUrl: string;
   completedStateIds: string[];
 }
 
@@ -52,19 +44,18 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 function RateDot(props: {
   cx?: number; cy?: number; payload?: DataPoint;
-  org: string; teamKey: string; completedStateIds: string[];
+  teamUrl: string; completedStateIds: string[];
 }) {
-  const { cx = 0, cy = 0, payload, org, teamKey, completedStateIds } = props;
+  const { cx = 0, cy = 0, payload, teamUrl, completedStateIds } = props;
   if (!payload || payload.onTimeRate == null) return null;
   return (
-    <circle cx={cx} cy={cy} r={4} fill="#FBBF24" strokeWidth={0}
-      style={{ cursor: "pointer" }}
-      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
+    <circle cx={cx} cy={cy} r={4} fill="#FBBF24" strokeWidth={0} style={{ cursor: "pointer" }}
+      onClick={() => openLinear(weeklyCompletedUrl(teamUrl, payload.weekStartISO, payload.weekEndISO, completedStateIds))}
     />
   );
 }
 
-export default function EfficiencyChart({ data, org, teamKey, completedStateIds }: Props) {
+export default function EfficiencyChart({ data, teamUrl, completedStateIds }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -77,23 +68,19 @@ export default function EfficiencyChart({ data, org, teamKey, completedStateIds 
         <Bar yAxisId="left" dataKey="onTime" name="On Time" stackId="a" fill="#059669" radius={[0, 0, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyOnTimeUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
+            openLinear(weeklyOnTimeUrl(teamUrl, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Bar yAxisId="left" dataKey="late" name="Late" stackId="a" fill="#E11D48" radius={[4, 4, 0, 0]} cursor="pointer"
           onClick={(data: unknown) => {
             const d = data as DataPoint;
-            openLinear(weeklyLateUrl(org, teamKey, d.weekStartISO, d.weekEndISO, completedStateIds));
+            openLinear(weeklyLateUrl(teamUrl, d.weekStartISO, d.weekEndISO, completedStateIds));
           }}
         />
         <Line
-          yAxisId="right"
-          type="monotone"
-          dataKey="onTimeRate"
-          name="On-Time Rate %"
-          stroke="#FBBF24"
-          strokeWidth={2}
-          dot={(props: object) => <RateDot {...(props as Parameters<typeof RateDot>[0])} org={org} teamKey={teamKey} completedStateIds={completedStateIds} />}
+          yAxisId="right" type="monotone" dataKey="onTimeRate" name="On-Time Rate %"
+          stroke="#FBBF24" strokeWidth={2}
+          dot={(props: object) => <RateDot {...(props as Parameters<typeof RateDot>[0])} teamUrl={teamUrl} completedStateIds={completedStateIds} />}
           activeDot={{ r: 6 }}
           connectNulls={false}
         />
