@@ -25,9 +25,9 @@ export async function getViewer(token: string) {
 
 export async function getTeams(token: string) {
   const data = await gql(token, `{
-    teams { nodes { id name key url } }
+    teams { nodes { id name key } }
   }`);
-  return data.teams.nodes as { id: string; name: string; key: string; url: string }[];
+  return data.teams.nodes as { id: string; name: string; key: string }[];
 }
 
 export interface WorkflowState {
