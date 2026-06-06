@@ -10,50 +10,57 @@ export function teamIssuesUrl(org: string, teamKey: string, filter?: object) {
   return filter ? `${base}?filter=${encode(filter)}` : base;
 }
 
-/** Completed issues in a calendar week (scoped to workspace's completed state IDs). */
+/**
+ * Completed issues in a calendar week.
+ * weekStart / weekEnd are YYYY-MM-DD strings (e.g. "2025-05-12" / "2025-05-18").
+ */
 export function weeklyCompletedUrl(
   org: string,
   teamKey: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
   });
 }
 
-/** Completed issues that were late (completedAt > dueDate) in a week. */
+/**
+ * Completed issues that were late (closed after their due date) in a week.
+ * "Late" = dueDate < completedAt, approximated as dueDate < weekStart
+ * (i.e. the due date had already passed before the week the issue was closed).
+ */
 export function weeklyLateUrl(
   org: string,
   teamKey: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
-    // completedAt date part > dueDate → late
-    // We can't express this inequality directly in one filter so we exclude
-    // issues whose dueDate is ≥ their completion week start (those are on-time).
-    dueDate: { lt: weekStartISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
+    dueDate: { lt: weekStart },
   });
 }
 
-/** Completed issues that were on-time (completedAt ≤ dueDate) in a week. */
+/**
+ * Completed issues that were on-time (closed on or before their due date) in a week.
+ * "On time" = dueDate >= completedAt, approximated as dueDate >= weekStart.
+ */
 export function weeklyOnTimeUrl(
   org: string,
   teamKey: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
-    dueDate: { gte: weekStartISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
+    dueDate: { gte: weekStart },
   });
 }
 
@@ -62,35 +69,35 @@ export function projectUrl(org: string, projectId: string) {
   return `${BASE}/${org}/project/${projectId}/issues`;
 }
 
-/** All completed issues for a developer across a period. */
+/** All completed issues for a developer across a period (YYYY-MM-DD bounds). */
 export function devIssuesUrl(
   org: string,
   teamKey: string,
   assigneeId: string,
-  afterISO: string,
-  beforeISO: string,
+  periodStart: string,
+  periodEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
     assignee: { id: { eq: assigneeId } },
-    completedAt: { gte: afterISO, lte: beforeISO },
+    completedAt: { gte: periodStart, lte: periodEnd },
   });
 }
 
-/** Completed issues for a developer in a specific week. */
+/** Completed issues for a developer in a specific week (YYYY-MM-DD bounds). */
 export function devWeekUrl(
   org: string,
   teamKey: string,
   assigneeId: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
     assignee: { id: { eq: assigneeId } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
   });
 }
 
@@ -98,13 +105,13 @@ export function devWeekUrl(
 export function missingEstimateUrl(
   org: string,
   teamKey: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
     estimate: { null: true },
   });
 }
@@ -113,13 +120,13 @@ export function missingEstimateUrl(
 export function missingDueDateUrl(
   org: string,
   teamKey: string,
-  weekStartISO: string,
-  weekEndISO: string,
+  weekStart: string,
+  weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    completedAt: { gte: weekStartISO, lte: weekEndISO },
+    completedAt: { gte: weekStart, lte: weekEnd },
     dueDate: { null: true },
   });
 }

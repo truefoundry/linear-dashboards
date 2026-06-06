@@ -67,8 +67,8 @@ export async function GET(req: NextRequest) {
     });
     return {
       week: format(weekStart, "MMM d"),
-      weekStartISO: weekStart.toISOString(),
-      weekEndISO: weekEnd.toISOString(),
+      weekStartISO: format(weekStart, "yyyy-MM-dd"),
+      weekEndISO: format(weekEnd, "yyyy-MM-dd"),
       count: weekIssues.length,
       points: weekIssues.reduce((s, i) => s + (i.estimate ?? 0), 0),
     };
@@ -114,8 +114,8 @@ export async function GET(req: NextRequest) {
     const late = withDueDate.length - onTime.length;
     return {
       week: format(weekStart, "MMM d"),
-      weekStartISO: weekStart.toISOString(),
-      weekEndISO: weekEnd.toISOString(),
+      weekStartISO: format(weekStart, "yyyy-MM-dd"),
+      weekEndISO: format(weekEnd, "yyyy-MM-dd"),
       withDueDate: withDueDate.length,
       onTime: onTime.length,
       late,
@@ -142,8 +142,8 @@ export async function GET(req: NextRequest) {
     const total = weekIssues.length;
     return {
       week: format(weekStart, "MMM d"),
-      weekStartISO: weekStart.toISOString(),
-      weekEndISO: weekEnd.toISOString(),
+      weekStartISO: format(weekStart, "yyyy-MM-dd"),
+      weekEndISO: format(weekEnd, "yyyy-MM-dd"),
       total,
       missingPoints,
       missingDueDate,
@@ -176,8 +176,8 @@ export async function GET(req: NextRequest) {
 
   const weekMeta = weekIntervals.map((w) => ({
     label: format(w, "MMM d"),
-    startISO: w.toISOString(),
-    endISO: endOfWeek(w, { weekStartsOn: 1 }).toISOString(),
+    startISO: format(w, "yyyy-MM-dd"),
+    endISO: format(endOfWeek(w, { weekStartsOn: 1 }), "yyyy-MM-dd"),
   }));
   const weekLabels = weekMeta.map((w) => w.label);
 
@@ -202,7 +202,7 @@ export async function GET(req: NextRequest) {
     teamKey,
     completedStateIds,
     cancelledStateIds,
-    period: { from: afterISO, to: beforeISO, weeks },
+    period: { from: format(after, "yyyy-MM-dd"), to: format(before, "yyyy-MM-dd"), weeks },
     totalIssues: issues.length,
     totalPoints: issues.reduce((s, i) => s + (i.estimate ?? 0), 0),
     velocityTrend,
