@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Linear Productivity Dashboard
 
-## Getting Started
+A developer productivity dashboard that connects to Linear via OAuth and visualises team velocity, project allocation, estimation efficiency, and per-developer throughput.
 
-First, run the development server:
+## Features
+
+- **Team selector** — switch between any Linear team in your workspace
+- **Timeline selector** — 2 / 4 / 6 / 8 / 12 week windows (defaults to 6)
+- **Team velocity trend** — weekly bar (issue count) + line (story points)
+- **Project allocation** — horizontal bar chart of issues and points per project
+- **Efficiency trend** — estimated points delivered, issues completed, and % of issues carrying an estimate
+- **Per-developer velocity** — multi-line chart switchable between story points and issue count, with a summary table
+
+## Security
+
+- OAuth read-only scope (`read`) — the app never asks for write access
+- Access tokens are stored server-side in the JWT session cookie (HTTP-only, signed with `NEXTAUTH_SECRET`)
+- All Linear API calls are made from Next.js API routes — the token is never exposed to the browser
+- No credentials or personal data are persisted to any database
+
+## Setup
+
+### 1. Create a Linear OAuth application
+
+1. Go to **Linear → Settings → API → OAuth applications → Create application**
+2. Set the callback URL to `http://localhost:3000/api/auth/callback/linear`
+3. Copy the **Client ID** and **Client Secret**
+
+### 2. Configure environment variables
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Edit `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+LINEAR_CLIENT_ID=<your client id>
+LINEAR_CLIENT_SECRET=<your client secret>
+NEXTAUTH_SECRET=<run: openssl rand -base64 32>
+NEXTAUTH_URL=http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Run
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) — you will be redirected to the login page.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Production deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For Vercel or any other host, set the four environment variables and update `NEXTAUTH_URL` to your production domain. The Linear OAuth callback URL must also be updated in your Linear app settings.
