@@ -11,9 +11,19 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { projectUrl, teamIssuesUrl } from "@/lib/linearUrls";
+
+interface ProjectPoint {
+  id: string | null;
+  name: string;
+  count: number;
+  points: number;
+}
 
 interface Props {
-  data: { name: string; count: number; points: number }[];
+  data: ProjectPoint[];
+  org: string;
+  teamKey: string;
 }
 
 const PROJECT_COLORS = [
@@ -21,7 +31,6 @@ const PROJECT_COLORS = [
   "#DC2626", "#9333EA", "#0284C7", "#10B981", "#F59E0B",
 ];
 
-// Custom legend so Story Points shows a colour swatch from the palette
 function CustomLegend() {
   return (
     <div className="flex gap-5 justify-center mt-2 text-xs text-slate-400">
@@ -30,33 +39,34 @@ function CustomLegend() {
         Story Points
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="inline-block w-3 h-3 rounded-sm bg-slate-500" />
+        <span className="inline-block w-3 h-3 rounded-sm bg-slate-400" />
         Issues
       </span>
     </div>
   );
 }
 
-export default function ProjectAllocationChart({ data }: Props) {
+function openLinear(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+export default function ProjectAllocationChart({ data, org, teamKey }: Props) {
   const top = data.slice(0, 10);
+
+  const handleClick = (data: unknown) => {
+    const entry = data as ProjectPoint;
+    const url = entry.id
+      ? projectUrl(org, entry.id)
+      : teamIssuesUrl(org, teamKey, { project: { null: true } });
+    openLinear(url);
+  };
+
   return (
     <ResponsiveContainer width="100%" height={Math.max(280, top.length * 52)}>
       <BarChart data={top} layout="vertical" margin={{ top: 8, right: 48, left: 8, bottom: 0 }} barCategoryGap="28%">
         <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-        <XAxis
-          type="number"
-          tick={{ fill: "#94A3B8", fontSize: 12 }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={140}
-          tick={{ fill: "#CBD5E1", fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-        />
+        <XAxis type="number" tick={{ fill: "#94A3B8", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <YAxis type="category" dataKey="name" width={140} tick={{ fill: "#CBD5E1", fontSize: 11 }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={{ background: "#1E293B", border: "1px solid #334155", borderRadius: 8, color: "#F1F5F9" }}
           labelStyle={{ color: "#E2E8F0", fontWeight: 600 }}
@@ -64,12 +74,12 @@ export default function ProjectAllocationChart({ data }: Props) {
           cursor={{ fill: "rgba(148,163,184,0.08)" }}
         />
         <Legend content={<CustomLegend />} />
-        <Bar dataKey="points" name="Story Points" radius={[0, 4, 4, 0]}>
+        <Bar dataKey="points" name="Story Points" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleClick}>
           {top.map((_, i) => (
             <Cell key={i} fill={PROJECT_COLORS[i % PROJECT_COLORS.length]} />
           ))}
         </Bar>
-        <Bar dataKey="count" name="Issues" fill="#94A3B8" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="count" name="Issues" fill="#94A3B8" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleClick} />
       </BarChart>
     </ResponsiveContainer>
   );

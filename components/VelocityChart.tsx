@@ -11,12 +11,42 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { weeklyCompletedUrl } from "@/lib/linearUrls";
 
-interface Props {
-  data: { week: string; count: number; points: number }[];
+interface DataPoint {
+  week: string;
+  weekStartISO: string;
+  weekEndISO: string;
+  count: number;
+  points: number;
 }
 
-export default function VelocityChart({ data }: Props) {
+interface Props {
+  data: DataPoint[];
+  org: string;
+  teamKey: string;
+}
+
+function openLinear(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function ClickableDot(props: {
+  cx?: number; cy?: number; payload?: DataPoint;
+  org: string; teamKey: string;
+}) {
+  const { cx = 0, cy = 0, payload, org, teamKey } = props;
+  if (!payload) return null;
+  return (
+    <circle
+      cx={cx} cy={cy} r={5} fill="#34D399" strokeWidth={0}
+      style={{ cursor: "pointer" }}
+      onClick={() => openLinear(weeklyCompletedUrl(org, teamKey, payload.weekStartISO, payload.weekEndISO))}
+    />
+  );
+}
+
+export default function VelocityChart({ data, org, teamKey }: Props) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -31,7 +61,18 @@ export default function VelocityChart({ data }: Props) {
           cursor={{ fill: "rgba(148,163,184,0.08)" }}
         />
         <Legend wrapperStyle={{ color: "#94A3B8", fontSize: 12 }} />
-        <Bar yAxisId="left" dataKey="count" name="Issues" fill="#7C3AED" radius={[4, 4, 0, 0]} />
+        <Bar
+          yAxisId="left"
+          dataKey="count"
+          name="Issues"
+          fill="#7C3AED"
+          radius={[4, 4, 0, 0]}
+          cursor="pointer"
+          onClick={(data: unknown) => {
+            const d = data as DataPoint;
+            openLinear(weeklyCompletedUrl(org, teamKey, d.weekStartISO, d.weekEndISO));
+          }}
+        />
         <Line
           yAxisId="right"
           type="monotone"
@@ -39,8 +80,8 @@ export default function VelocityChart({ data }: Props) {
           name="Story Points"
           stroke="#34D399"
           strokeWidth={2}
-          dot={{ r: 4, fill: "#34D399", strokeWidth: 0 }}
-          activeDot={{ r: 6 }}
+          dot={(props: object) => <ClickableDot {...(props as Parameters<typeof ClickableDot>[0])} org={org} teamKey={teamKey} />}
+          activeDot={{ r: 7 }}
         />
       </ComposedChart>
     </ResponsiveContainer>

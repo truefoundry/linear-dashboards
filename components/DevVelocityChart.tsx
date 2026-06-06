@@ -11,11 +11,20 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { devIssuesUrl, devWeekUrl } from "@/lib/linearUrls";
+
+interface DevWeek {
+  week: string;
+  weekStartISO: string;
+  weekEndISO: string;
+  count: number;
+  points: number;
+}
 
 interface DevData {
   id: string;
   name: string;
-  data: { week: string; count: number; points: number }[];
+  data: DevWeek[];
   totalCount: number;
   totalPoints: number;
 }
@@ -23,6 +32,10 @@ interface DevData {
 interface Props {
   devVelocity: DevData[];
   weekLabels: string[];
+  org: string;
+  teamKey: string;
+  periodStart: string;
+  periodEnd: string;
 }
 
 const COLORS = [
@@ -32,8 +45,34 @@ const COLORS = [
 
 type Metric = "count" | "points";
 
-export default function DevVelocityChart({ devVelocity, weekLabels }: Props) {
+function openLinear(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function makeClickableDot(dev: DevData, weekISOMap: Map<string, { start: string; end: string }>, org: string, teamKey: string, color: string) {
+  return function ClickableDot(props: { cx?: number; cy?: number; payload?: { week: string } }) {
+    const { cx = 0, cy = 0, payload } = props;
+    if (!payload) return null;
+    const wk = weekISOMap.get(payload.week);
+    if (!wk) return null;
+    return (
+      <circle cx={cx} cy={cy} r={4} fill={color} strokeWidth={0}
+        style={{ cursor: "pointer" }}
+        onClick={() => openLinear(devWeekUrl(org, teamKey, dev.id, wk.start, wk.end))}
+      />
+    );
+  };
+}
+
+export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey, periodStart, periodEnd }: Props) {
   const [metric, setMetric] = useState<Metric>("points");
+
+  const weekISOMap = new Map<string, { start: string; end: string }>();
+  if (devVelocity[0]) {
+    for (const wk of devVelocity[0].data) {
+      weekISOMap.set(wk.week, { start: wk.weekStartISO, end: wk.weekEndISO });
+    }
+  }
 
   const chartData = weekLabels.map((week) => {
     const row: Record<string, number | string> = { week };
@@ -49,21 +88,13 @@ export default function DevVelocityChart({ devVelocity, weekLabels }: Props) {
       <div className="flex gap-2">
         <button
           onClick={() => setMetric("points")}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            metric === "points"
-              ? "bg-violet-600 text-white"
-              : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-          }`}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${metric === "points" ? "bg-violet-600 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`}
         >
           Story Points
         </button>
         <button
           onClick={() => setMetric("count")}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            metric === "count"
-              ? "bg-violet-600 text-white"
-              : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-          }`}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${metric === "count" ? "bg-violet-600 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`}
         >
           Issue Count
         </button>
@@ -80,17 +111,21 @@ export default function DevVelocityChart({ devVelocity, weekLabels }: Props) {
             cursor={{ stroke: "#475569" }}
           />
           <Legend wrapperStyle={{ color: "#94A3B8", fontSize: 12 }} />
-          {devVelocity.map((dev, i) => (
-            <Line
-              key={dev.id}
-              type="monotone"
-              dataKey={dev.name}
-              stroke={COLORS[i % COLORS.length]}
-              strokeWidth={2}
-              dot={{ r: 3, fill: COLORS[i % COLORS.length], strokeWidth: 0 }}
-              activeDot={{ r: 5 }}
-            />
-          ))}
+          {devVelocity.map((dev, i) => {
+            const color = COLORS[i % COLORS.length];
+            const DotComponent = makeClickableDot(dev, weekISOMap, org, teamKey, color);
+            return (
+              <Line
+                key={dev.id}
+                type="monotone"
+                dataKey={dev.name}
+                stroke={color}
+                strokeWidth={2}
+                dot={DotComponent}
+                activeDot={{ r: 6 }}
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
 
@@ -105,13 +140,16 @@ export default function DevVelocityChart({ devVelocity, weekLabels }: Props) {
           </thead>
           <tbody>
             {devVelocity.map((dev, i) => (
-              <tr key={dev.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+              <tr
+                key={dev.id}
+                className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                onClick={() => openLinear(devIssuesUrl(org, teamKey, dev.id, periodStart, periodEnd))}
+                title="Open all issues in Linear ↗"
+              >
                 <td className="py-2.5 px-4 flex items-center gap-2.5 text-slate-200">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
-                    style={{ background: COLORS[i % COLORS.length] }}
-                  />
+                  <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                   {dev.name}
+                  <span className="text-slate-600 text-xs ml-auto">↗</span>
                 </td>
                 <td className="text-right py-2.5 px-4 text-slate-300">{dev.totalCount}</td>
                 <td className="text-right py-2.5 px-4 text-slate-300">{dev.totalPoints}</td>

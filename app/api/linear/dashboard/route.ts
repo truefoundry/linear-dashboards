@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getCompletedIssues, LinearIssue } from "@/lib/linear";
+import { getCompletedIssues, getTeams, getViewer, LinearIssue } from "@/lib/linear";
 import {
   startOfWeek,
   endOfWeek,
@@ -35,12 +35,14 @@ export async function GET(req: NextRequest) {
   const afterISO = after.toISOString();
   const beforeISO = before.toISOString();
 
-  const issues = await getCompletedIssues(
-    session.accessToken,
-    teamId,
-    afterISO,
-    beforeISO
-  );
+  const [issues, viewer, teams] = await Promise.all([
+    getCompletedIssues(session.accessToken, teamId, afterISO, beforeISO),
+    getViewer(session.accessToken),
+    getTeams(session.accessToken),
+  ]);
+
+  const orgUrlKey = viewer.organization.urlKey;
+  const teamKey = teams.find((t) => t.id === teamId)?.key ?? teamId;
 
   const weekIntervals = eachWeekOfInterval(
     { start: after, end: before },
@@ -57,18 +59,24 @@ export async function GET(req: NextRequest) {
     });
     return {
       week: format(weekStart, "MMM d"),
+      weekStartISO: weekStart.toISOString(),
+      weekEndISO: weekEnd.toISOString(),
       count: weekIssues.length,
       points: weekIssues.reduce((s, i) => s + (i.estimate ?? 0), 0),
     };
   });
 
   // ── project allocation ───────────────────────────────────────────────────────
-  const projectMap = new Map<string, { name: string; count: number; points: number }>();
+  const projectMap = new Map<
+    string,
+    { id: string | null; name: string; count: number; points: number }
+  >();
   for (const issue of issues) {
     const key = issue.project?.id ?? "__no_project__";
     const name = issue.project?.name ?? "No Project";
-    const existing = projectMap.get(key) ?? { name, count: 0, points: 0 };
+    const existing = projectMap.get(key) ?? { id: issue.project?.id ?? null, name, count: 0, points: 0 };
     projectMap.set(key, {
+      id: existing.id,
       name,
       count: existing.count + 1,
       points: existing.points + (issue.estimate ?? 0),
@@ -98,6 +106,8 @@ export async function GET(req: NextRequest) {
     const late = withDueDate.length - onTime.length;
     return {
       week: format(weekStart, "MMM d"),
+      weekStartISO: weekStart.toISOString(),
+      weekEndISO: weekEnd.toISOString(),
       withDueDate: withDueDate.length,
       onTime: onTime.length,
       late,
@@ -124,6 +134,8 @@ export async function GET(req: NextRequest) {
     const total = weekIssues.length;
     return {
       week: format(weekStart, "MMM d"),
+      weekStartISO: weekStart.toISOString(),
+      weekEndISO: weekEnd.toISOString(),
       total,
       missingPoints,
       missingDueDate,
@@ -154,14 +166,22 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const weekLabels = weekIntervals.map((w) => format(w, "MMM d"));
+  const weekMeta = weekIntervals.map((w) => ({
+    label: format(w, "MMM d"),
+    startISO: w.toISOString(),
+    endISO: endOfWeek(w, { weekStartsOn: 1 }).toISOString(),
+  }));
+  const weekLabels = weekMeta.map((w) => w.label);
+
   const devVelocity = Array.from(devMap.entries()).map(([id, dev]) => ({
     id,
     name: dev.name,
-    data: weekLabels.map((w) => ({
-      week: w,
-      count: dev.weeks.get(w)?.count ?? 0,
-      points: dev.weeks.get(w)?.points ?? 0,
+    data: weekMeta.map(({ label, startISO, endISO }) => ({
+      week: label,
+      weekStartISO: startISO,
+      weekEndISO: endISO,
+      count: dev.weeks.get(label)?.count ?? 0,
+      points: dev.weeks.get(label)?.points ?? 0,
     })),
     totalCount: Array.from(dev.weeks.values()).reduce((s, v) => s + v.count, 0),
     totalPoints: Array.from(dev.weeks.values()).reduce((s, v) => s + v.points, 0),
@@ -170,6 +190,8 @@ export async function GET(req: NextRequest) {
   devVelocity.sort((a, b) => b.totalPoints - a.totalPoints);
 
   return NextResponse.json({
+    orgUrlKey,
+    teamKey,
     period: { from: afterISO, to: beforeISO, weeks },
     totalIssues: issues.length,
     totalPoints: issues.reduce((s, i) => s + (i.estimate ?? 0), 0),
@@ -179,5 +201,6 @@ export async function GET(req: NextRequest) {
     dataQualityTrend,
     devVelocity,
     weekLabels,
+    weekMeta,
   });
 }

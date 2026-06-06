@@ -16,6 +16,13 @@ async function gql(token: string, query: string, variables?: Record<string, unkn
   return json.data;
 }
 
+export async function getViewer(token: string) {
+  const data = await gql(token, `{
+    viewer { organization { urlKey } }
+  }`);
+  return data.viewer as { organization: { urlKey: string } };
+}
+
 export async function getTeams(token: string) {
   const data = await gql(token, `{
     teams { nodes { id name key } }

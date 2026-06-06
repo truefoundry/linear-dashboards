@@ -17,13 +17,17 @@ interface Team {
 }
 
 interface DashboardData {
+  orgUrlKey: string;
+  teamKey: string;
   period: { from: string; to: string; weeks: number };
   totalIssues: number;
   totalPoints: number;
-  velocityTrend: { week: string; count: number; points: number }[];
-  projectAllocation: { name: string; count: number; points: number }[];
+  velocityTrend: { week: string; weekStartISO: string; weekEndISO: string; count: number; points: number }[];
+  projectAllocation: { id: string | null; name: string; count: number; points: number }[];
   efficiencyTrend: {
     week: string;
+    weekStartISO: string;
+    weekEndISO: string;
     withDueDate: number;
     onTime: number;
     late: number;
@@ -31,6 +35,8 @@ interface DashboardData {
   }[];
   dataQualityTrend: {
     week: string;
+    weekStartISO: string;
+    weekEndISO: string;
     total: number;
     missingPoints: number;
     missingDueDate: number;
@@ -41,7 +47,7 @@ interface DashboardData {
   devVelocity: {
     id: string;
     name: string;
-    data: { week: string; count: number; points: number }[];
+    data: { week: string; weekStartISO: string; weekEndISO: string; count: number; points: number }[];
     totalCount: number;
     totalPoints: number;
   }[];
@@ -198,23 +204,23 @@ export default function DashboardPage() {
             {/* Velocity Trend */}
             <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
               <h2 className="text-sm font-semibold text-slate-200 mb-1">Team Velocity Trend</h2>
-              <p className="text-xs text-slate-500 mb-4">Issues completed and story points delivered per week</p>
-              <VelocityChart data={dashboard.velocityTrend} />
+              <p className="text-xs text-slate-500 mb-4">Issues completed and story points delivered per week · click a bar to open in Linear</p>
+              <VelocityChart data={dashboard.velocityTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} />
             </section>
 
             {/* Two-column row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
                 <h2 className="text-sm font-semibold text-slate-200 mb-1">Project Allocation</h2>
-                <p className="text-xs text-slate-500 mb-4">Issues and points per project over the period</p>
-                <ProjectAllocationChart data={dashboard.projectAllocation} />
+                <p className="text-xs text-slate-500 mb-4">Issues and points per project · click a bar to open in Linear</p>
+                <ProjectAllocationChart data={dashboard.projectAllocation} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} />
               </section>
               <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
                 <h2 className="text-sm font-semibold text-slate-200 mb-1">On-Time Completion</h2>
                 <p className="text-xs text-slate-500 mb-4">
                   Issues closed on or before due date · excludes issues with no due date
                 </p>
-                <EfficiencyChart data={dashboard.efficiencyTrend} />
+                <EfficiencyChart data={dashboard.efficiencyTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} />
               </section>
             </div>
 
@@ -224,7 +230,7 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-500 mb-4">
                 % of completed issues missing story points or due date — lower is better
               </p>
-              <DataQualityChart data={dashboard.dataQualityTrend} />
+              <DataQualityChart data={dashboard.dataQualityTrend} org={dashboard.orgUrlKey} teamKey={dashboard.teamKey} />
             </section>
 
             {/* Per-developer velocity */}
@@ -234,6 +240,10 @@ export default function DashboardPage() {
               <DevVelocityChart
                 devVelocity={dashboard.devVelocity}
                 weekLabels={dashboard.weekLabels}
+                org={dashboard.orgUrlKey}
+                teamKey={dashboard.teamKey}
+                periodStart={dashboard.period.from}
+                periodEnd={dashboard.period.to}
               />
             </section>
           </>
