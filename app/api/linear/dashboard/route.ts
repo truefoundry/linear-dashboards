@@ -156,13 +156,13 @@ export async function GET(req: NextRequest) {
   // ── per-developer velocity ───────────────────────────────────────────────────
   const devMap = new Map<
     string,
-    { name: string; weeks: Map<string, { count: number; points: number }> }
+    { name: string; email: string; weeks: Map<string, { count: number; points: number }> }
   >();
 
   for (const issue of issues) {
     if (!issue.assignee || !issue.completedAt) continue;
-    const { id, name } = issue.assignee;
-    if (!devMap.has(id)) devMap.set(id, { name, weeks: new Map() });
+    const { id, name, email } = issue.assignee;
+    if (!devMap.has(id)) devMap.set(id, { name, email, weeks: new Map() });
     const dev = devMap.get(id)!;
 
     const d = parseISO(issue.completedAt);
@@ -184,6 +184,7 @@ export async function GET(req: NextRequest) {
   const devVelocity = Array.from(devMap.entries()).map(([id, dev]) => ({
     id,
     name: dev.name,
+    email: dev.email,
     data: weekMeta.map(({ label, startISO, endISO }) => ({
       week: label,
       weekStartISO: startISO,

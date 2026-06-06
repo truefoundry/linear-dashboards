@@ -71,7 +71,7 @@ export interface LinearIssue {
   dueDate: string | null;
   completedAt: string | null;
   createdAt: string;
-  assignee: { id: string; name: string } | null;
+  assignee: { id: string; name: string; email: string } | null;
   project: { id: string; name: string } | null;
   cycle: { id: string; name: string; number: number } | null;
 }
@@ -104,7 +104,7 @@ export async function getCompletedIssues(
             dueDate
             completedAt
             createdAt
-            assignee { id name }
+            assignee { id name email }
             project { id name }
             cycle { id name number }
           }

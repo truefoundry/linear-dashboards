@@ -7,7 +7,13 @@ function encode(filter: object) {
 /** All issues for a team, optionally filtered. */
 export function teamIssuesUrl(org: string, teamKey: string, filter?: object) {
   const base = `${BASE}/${org}/team/${teamKey}/all`;
-  return filter ? `${base}?filter=${encode(filter)}` : base;
+  if (!filter) return base;
+  const url = `${base}?filter=${encode(filter)}`;
+  // Log the decoded filter so it can be inspected in browser DevTools
+  if (typeof window !== "undefined") {
+    console.debug("[Linear URL]", url, "\n[filter]", JSON.stringify(filter, null, 2));
+  }
+  return url;
 }
 
 /**
@@ -73,14 +79,14 @@ export function projectUrl(org: string, projectId: string) {
 export function devIssuesUrl(
   org: string,
   teamKey: string,
-  assigneeId: string,
+  assigneeEmail: string,
   periodStart: string,
   periodEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    assignee: { id: { eq: assigneeId } },
+    assignee: { email: { eq: assigneeEmail } },
     completedAt: { gte: periodStart, lte: periodEnd },
   });
 }
@@ -89,14 +95,14 @@ export function devIssuesUrl(
 export function devWeekUrl(
   org: string,
   teamKey: string,
-  assigneeId: string,
+  assigneeEmail: string,
   weekStart: string,
   weekEnd: string,
   completedStateIds: string[]
 ) {
   return teamIssuesUrl(org, teamKey, {
     state: { id: { in: completedStateIds } },
-    assignee: { id: { eq: assigneeId } },
+    assignee: { email: { eq: assigneeEmail } },
     completedAt: { gte: weekStart, lte: weekEnd },
   });
 }

@@ -24,6 +24,7 @@ interface DevWeek {
 interface DevData {
   id: string;
   name: string;
+  email: string;
   data: DevWeek[];
   totalCount: number;
   totalPoints: number;
@@ -59,7 +60,7 @@ function makeClickableDot(dev: DevData, weekISOMap: Map<string, { start: string;
     return (
       <circle cx={cx} cy={cy} r={4} fill={color} strokeWidth={0}
         style={{ cursor: "pointer" }}
-        onClick={() => openLinear(devWeekUrl(org, teamKey, dev.id, wk.start, wk.end, completedStateIds))}
+        onClick={() => openLinear(devWeekUrl(org, teamKey, dev.email, wk.start, wk.end, completedStateIds))}
       />
     );
   };
@@ -144,7 +145,7 @@ export default function DevVelocityChart({ devVelocity, weekLabels, org, teamKey
               <tr
                 key={dev.id}
                 className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors cursor-pointer"
-                onClick={() => openLinear(devIssuesUrl(org, teamKey, dev.id, periodStart, periodEnd, completedStateIds))}
+                onClick={() => openLinear(devIssuesUrl(org, teamKey, dev.email, periodStart, periodEnd, completedStateIds))}
                 title="Open all issues in Linear ↗"
               >
                 <td className="py-2.5 px-4 flex items-center gap-2.5 text-slate-200">

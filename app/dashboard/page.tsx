@@ -49,6 +49,7 @@ interface DashboardData {
   devVelocity: {
     id: string;
     name: string;
+    email: string;
     data: { week: string; weekStartISO: string; weekEndISO: string; count: number; points: number }[];
     totalCount: number;
     totalPoints: number;
