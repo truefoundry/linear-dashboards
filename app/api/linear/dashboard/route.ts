@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getCompletedIssues, getTeams, getTeamStates, getViewer, LinearIssue } from "@/lib/linear";
+import { getCompletedIssues, getTeams, getTeamStates, getViewer } from "@/lib/linear";
 import {
   startOfWeek,
   endOfWeek,
@@ -44,9 +44,6 @@ export async function GET(req: NextRequest) {
 
   const completedStateIds = states
     .filter((s) => s.type === "completed")
-    .map((s) => s.id);
-  const cancelledStateIds = states
-    .filter((s) => s.type === "cancelled")
     .map((s) => s.id);
 
   const orgUrlKey = viewer.organization.urlKey;
@@ -206,7 +203,6 @@ export async function GET(req: NextRequest) {
     teamKey,
     teamUrl,
     completedStateIds,
-    cancelledStateIds,
     period: { from: format(after, "yyyy-MM-dd"), to: format(before, "yyyy-MM-dd"), weeks },
     totalIssues: issues.length,
     totalPoints: issues.reduce((s, i) => s + (i.estimate ?? 0), 0),

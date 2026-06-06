@@ -21,17 +21,9 @@ function encodeFilter(filter: object): string {
 }
 
 function withFilter(base: string, filter: object): string {
-  const url = `${base}?filter=${encodeFilter(filter)}`;
-  if (typeof window !== "undefined") {
-    console.debug("[Linear URL]", url, "\n[filter]", JSON.stringify(filter, null, 2));
-  }
-  return url;
+  return `${base}?filter=${encodeFilter(filter)}`;
 }
 
-/** Team completed issues view — the built-in /completed view (no date filter). */
-export function teamCompletedUrl(teamUrl: string): string {
-  return `${teamUrl}/completed`;
-}
 
 /** Completed issues in a calendar week (YYYY-MM-DD). */
 export function weeklyCompletedUrl(
@@ -152,14 +144,3 @@ export function missingBothUrl(
   });
 }
 
-/** Completed issues for a project across the period. */
-export function projectCompletedUrl(
-  teamUrl: string,
-  projectId: string,
-  completedStateIds: string[]
-): string {
-  return withFilter(`${teamUrl}/all`, {
-    state: { id: { in: completedStateIds } },
-    project: { id: { eq: projectId } },
-  });
-}

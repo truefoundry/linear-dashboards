@@ -21,7 +21,6 @@ interface DashboardData {
   teamKey: string;
   teamUrl: string;
   completedStateIds: string[];
-  cancelledStateIds: string[];
   period: { from: string; to: string; weeks: number };
   totalIssues: number;
   totalPoints: number;
@@ -100,9 +99,8 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [selectedTeam, weeks]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
   if (status === "loading") {
     return (

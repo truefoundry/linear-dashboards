@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from "recharts";
-import { projectUrl, teamCompletedUrl } from "@/lib/linearUrls";
+import { projectUrl } from "@/lib/linearUrls";
 
 interface ProjectPoint {
   id: string | null;

@@ -50,18 +50,6 @@ export async function getTeamStates(token: string, teamId: string): Promise<Work
   return data.team.states.nodes as WorkflowState[];
 }
 
-export async function getTeamMembers(token: string, teamId: string) {
-  const data = await gql(
-    token,
-    `query($teamId: String!) {
-      team(id: $teamId) {
-        members { nodes { id name email avatarUrl } }
-      }
-    }`,
-    { teamId }
-  );
-  return data.team.members.nodes as { id: string; name: string; email: string; avatarUrl?: string }[];
-}
 
 export interface LinearIssue {
   id: string;
@@ -128,35 +116,3 @@ export async function getCompletedIssues(
   return allIssues;
 }
 
-export async function getInProgressIssues(
-  token: string,
-  teamId: string,
-  after: string,
-  before: string
-): Promise<LinearIssue[]> {
-  const data = await gql(
-    token,
-    `query($filter: IssueFilter) {
-      issues(filter: $filter, first: 250, orderBy: updatedAt) {
-        nodes {
-          id title
-          state { name type }
-          estimate
-          completedAt
-          createdAt
-          assignee { id name }
-          project { id name }
-          cycle { id name number }
-        }
-      }
-    }`,
-    {
-      filter: {
-        team: { id: { eq: teamId } },
-        state: { type: { in: ["started", "inProgress"] } },
-        createdAt: { gte: after, lte: before },
-      },
-    }
-  );
-  return data.issues.nodes;
-}
