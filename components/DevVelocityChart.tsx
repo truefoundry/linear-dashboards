@@ -66,6 +66,23 @@ function makeClickableDot(
 
 export default function DevVelocityChart({ devVelocity, weekLabels, teamUrl, completedStateIds, periodStart, periodEnd }: Props) {
   const [metric, setMetric] = useState<Metric>("points");
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+
+  const allKeys = devVelocity.map(d => d.name);
+
+  function toggleSeries(key: string, multi: boolean) {
+    setHidden(prev => {
+      if (multi) {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        if (next.size === allKeys.length) return new Set();
+        return next;
+      }
+      const isSolo = prev.size === allKeys.length - 1 && !prev.has(key);
+      if (isSolo) return new Set();
+      return new Set(allKeys.filter(k => k !== key));
+    });
+  }
 
   const weekISOMap = new Map<string, { start: string; end: string }>();
   if (devVelocity[0]) {
@@ -106,12 +123,27 @@ export default function DevVelocityChart({ devVelocity, weekLabels, teamUrl, com
             itemStyle={{ color: "#CBD5E1" }}
             cursor={{ stroke: "#475569" }}
           />
-          <Legend wrapperStyle={{ color: "#94A3B8", fontSize: 12 }} />
+          <Legend content={() => (
+            <ul className="flex flex-wrap justify-center gap-4 pt-1">
+              {devVelocity.map((dev, i) => {
+                const color = COLORS[i % COLORS.length];
+                return (
+                  <li key={dev.id}
+                    className={`flex items-center gap-1.5 text-xs cursor-pointer select-none transition-opacity ${hidden.has(dev.name) ? "opacity-30" : "opacity-100"}`}
+                    onClick={e => toggleSeries(dev.name, e.metaKey || e.ctrlKey)}>
+                    <span className="w-4 h-0.5 inline-block" style={{ background: color }} />
+                    <span className="text-slate-400">{dev.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )} />
           {devVelocity.map((dev, i) => {
             const color = COLORS[i % COLORS.length];
             const DotComponent = makeClickableDot(dev, weekISOMap, teamUrl, completedStateIds, color);
             return (
               <Line key={dev.id} type="monotone" dataKey={dev.name} stroke={color} strokeWidth={2}
+                hide={hidden.has(dev.name)}
                 dot={DotComponent} activeDot={{ r: 6 }} />
             );
           })}

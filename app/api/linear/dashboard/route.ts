@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getCompletedIssues, getTeams, getTeamStates, getViewer } from "@/lib/linear";
+import { getCompletedIssues, getCompletedProjects, getTeams, getTeamStates, getViewer } from "@/lib/linear";
 import {
   startOfWeek,
   endOfWeek,
@@ -35,11 +35,12 @@ export async function GET(req: NextRequest) {
   const afterISO = after.toISOString();
   const beforeISO = before.toISOString();
 
-  const [issues, viewer, teams, states] = await Promise.all([
+  const [issues, viewer, teams, states, projects] = await Promise.all([
     getCompletedIssues(session.accessToken, teamId, afterISO, beforeISO),
     getViewer(session.accessToken),
     getTeams(session.accessToken),
     getTeamStates(session.accessToken, teamId),
+    getCompletedProjects(session.accessToken, teamId, afterISO, beforeISO),
   ]);
 
   const completedStateIds = states
@@ -198,6 +199,41 @@ export async function GET(req: NextRequest) {
 
   devVelocity.sort((a, b) => b.totalPoints - a.totalPoints);
 
+  // ── projects closed by week ──────────────────────────────────────────────────
+  const projectsClosedByWeek = weekIntervals.map((weekStart) => {
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+    const count = projects.filter((p) => {
+      if (!p.completedAt) return false;
+      return isWithinInterval(parseISO(p.completedAt), { start: weekStart, end: weekEnd });
+    }).length;
+    return {
+      week: format(weekStart, "MMM d"),
+      weekStartISO: format(weekStart, "yyyy-MM-dd"),
+      weekEndISO: format(weekEnd, "yyyy-MM-dd"),
+      count,
+    };
+  });
+
+  // ── projects closed list ─────────────────────────────────────────────────────
+  const projectsClosed = projects
+    .filter((p) => p.completedAt != null)
+    .map((p) => {
+      let onTime: boolean | null = null;
+      if (p.targetDate && p.completedAt) {
+        onTime = p.completedAt.slice(0, 10) <= p.targetDate;
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        url: p.url,
+        completedAt: p.completedAt!.slice(0, 10),
+        targetDate: p.targetDate,
+        lead: p.lead,
+        onTime,
+      };
+    })
+    .sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+
   return NextResponse.json({
     orgUrlKey,
     teamKey,
@@ -213,5 +249,7 @@ export async function GET(req: NextRequest) {
     devVelocity,
     weekLabels,
     weekMeta,
+    projectsClosedByWeek,
+    projectsClosed,
   });
 }

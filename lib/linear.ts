@@ -64,6 +64,61 @@ export interface LinearIssue {
   cycle: { id: string; name: string; number: number } | null;
 }
 
+export interface LinearProject {
+  id: string;
+  name: string;
+  url: string;
+  completedAt: string | null;
+  targetDate: string | null;
+  lead: { id: string; name: string; email: string } | null;
+}
+
+export async function getCompletedProjects(
+  token: string,
+  teamId: string,
+  after: string,
+  before: string
+): Promise<LinearProject[]> {
+  const allProjects: LinearProject[] = [];
+  let cursor: string | null = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const data = await gql(
+      token,
+      `query($teamId: String!, $cursor: String, $filter: ProjectFilter) {
+        team(id: $teamId) {
+          projects(
+            filter: $filter
+            first: 100
+            after: $cursor
+          ) {
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              id name url completedAt targetDate
+              lead { id name email }
+            }
+          }
+        }
+      }`,
+      {
+        teamId,
+        cursor,
+        filter: {
+          completedAt: { gte: after, lte: before },
+        },
+      }
+    );
+
+    const page = data.team.projects;
+    allProjects.push(...page.nodes);
+    hasMore = page.pageInfo.hasNextPage;
+    cursor = page.pageInfo.endCursor;
+  }
+
+  return allProjects;
+}
+
 export async function getCompletedIssues(
   token: string,
   teamId: string,
