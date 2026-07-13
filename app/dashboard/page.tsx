@@ -8,6 +8,8 @@ import ProjectAllocationChart from "@/components/ProjectAllocationChart";
 import EfficiencyChart from "@/components/EfficiencyChart";
 import DataQualityChart from "@/components/DataQualityChart";
 import DevVelocityChart from "@/components/DevVelocityChart";
+import ProjectsClosedChart from "@/components/ProjectsClosedChart";
+import ProjectsClosedTable from "@/components/ProjectsClosedTable";
 import StatCard from "@/components/StatCard";
 
 interface Team {
@@ -55,6 +57,16 @@ interface DashboardData {
     totalPoints: number;
   }[];
   weekLabels: string[];
+  projectsClosedByWeek: { week: string; weekStartISO: string; weekEndISO: string; count: number }[];
+  projectsClosed: {
+    id: string;
+    name: string;
+    url: string;
+    completedAt: string;
+    targetDate: string | null;
+    lead: { id: string; name: string; email: string } | null;
+    onTime: boolean | null;
+  }[];
 }
 
 const WEEK_OPTIONS = [2, 4, 6, 8, 12];
@@ -248,6 +260,23 @@ export default function DashboardPage() {
                 periodEnd={dashboard.period.to}
               />
             </section>
+
+            {/* Projects closed */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
+                <h2 className="text-sm font-semibold text-slate-200 mb-1">Projects Closed per Week</h2>
+                <p className="text-xs text-slate-500 mb-4">Number of projects marked complete each week · click to open in Linear</p>
+                <ProjectsClosedChart
+                  data={dashboard.projectsClosedByWeek}
+                  orgUrlKey={dashboard.orgUrlKey}
+                />
+              </section>
+              <section className="bg-slate-800/60 rounded-xl border border-slate-700/60 p-5">
+                <h2 className="text-sm font-semibold text-slate-200 mb-1">Projects Closed</h2>
+                <p className="text-xs text-slate-500 mb-4">All projects completed in this period · click a row to open in Linear</p>
+                <ProjectsClosedTable projects={dashboard.projectsClosed} />
+              </section>
+            </div>
           </>
         )}
 
